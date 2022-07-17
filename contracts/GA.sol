@@ -112,17 +112,17 @@ contract MetaYomenClub is ERC1155, Ownable{
         uint256 price = 0;
         uint256 i = 0;
         while(i < _amount){
-            if(0 <= numberOfToken[_tokenId] && numberOfToken[_tokenId] <= 50)
+            if(numberOfToken[_tokenId] + i < 50)
             {
                 price += 0.001 ether;
             }
-            else if(0 <= numberOfToken[_tokenId ]&& numberOfToken[_tokenId] <= 75){
+            else if(numberOfToken[_tokenId] + i < 75){
                 price += 0.002 ether;
             }
-            else if( 0<= numberOfToken[_tokenId] && numberOfToken[_tokenId] <= 88){
+            else if(numberOfToken[_tokenId] + i < 88){
                 price += 0.003 ether;
             }
-            else if( 0<= numberOfToken[_tokenId] && numberOfToken[_tokenId] <= 94){
+            else if(numberOfToken[_tokenId] + i < 94){
                 price += 0.004 ether;
             }
             else{
