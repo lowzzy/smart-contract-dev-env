@@ -34,7 +34,7 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 
 
 contract MetaYomenClub is ERC1155, Ownable{
-    uint256[] public numberOfToken;
+    uint256[] public numberOfPaidToken;
     // uint256 public wlmintPrice = 0.03 ether;
     // uint256 public mintPrice = 0.05 ether;
     // uint256 private maxMintsPerWL = 5;
@@ -65,7 +65,7 @@ contract MetaYomenClub is ERC1155, Ownable{
     // コントラクトデプロイ時に１度だけ呼ばれる
     constructor() ERC1155("") {
         // 最初は10個GAで出すので
-        numberOfToken=[0,0,0,0,0,0,0,0,0,0];
+        numberOfPaidToken=[0,0,0,0,0,0,0,0,0,0];
         publicSaleEnabled=[false,false,false,false,false,false,false,false,false,false];
 
         baseMetadataURIPrefix = "https://metayomenclub.herokuapp.com/api/v1/metadata/";
@@ -100,29 +100,32 @@ contract MetaYomenClub is ERC1155, Ownable{
         require(publicSaleEnabled[_tokenId], "publicMint: Paused");
         require(maxMintsPerPS >= _amount, "publicMint: 10 maxper tx");
         require(maxMintsPerPS >= psMinted[msg.sender] + _amount, "You have no publicMint left");
-        require((_amount + numberOfToken[_tokenId]) <= (_totalSupply), "No more NFTs");
+        require((_amount + numberOfPaidToken[_tokenId]) <= (_totalSupply), "No more NFTs");
         require(msg.value == mintPrice(_tokenId,_amount), "Value sent is not correct");
 
+        psMinted[msg.sender] += _amount;
         baseMetadataURISuffix = "?is_free=1";
         _mint(msg.sender, _tokenId, _amount, "");
         baseMetadataURISuffix = "?is_free=0";
+        numberOfPaidToken[_tokenId] += _amount;
+
     }
 
     function mintPrice(uint256 _tokenId, uint256 _amount) public view returns (uint256) {
         uint256 price = 0;
         uint256 i = 0;
         while(i < _amount){
-            if(numberOfToken[_tokenId] + i < 50)
+            if(numberOfPaidToken[_tokenId] + i < 50)
             {
                 price += 0.001 ether;
             }
-            else if(numberOfToken[_tokenId] + i < 75){
+            else if(numberOfPaidToken[_tokenId] + i < 75){
                 price += 0.002 ether;
             }
-            else if(numberOfToken[_tokenId] + i < 88){
+            else if(numberOfPaidToken[_tokenId] + i < 88){
                 price += 0.003 ether;
             }
-            else if(numberOfToken[_tokenId] + i < 94){
+            else if(numberOfPaidToken[_tokenId] + i < 94){
                 price += 0.004 ether;
             }
             else{
@@ -161,7 +164,7 @@ contract MetaYomenClub is ERC1155, Ownable{
 
 
     function addNFT(uint256 _tokenId) public onlyOwner(){
-        numberOfToken.push(0);
+        numberOfPaidToken.push(0);
         publicSaleEnabled.push(false);
         _mint(msg.sender, _tokenId, 10, "");
     }
