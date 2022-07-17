@@ -7,6 +7,17 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 
 contract MetaYomenClub is ERC1155, Ownable{
+    uint256[] public numberOfToken;
+    // uint256 public wlmintPrice = 0.03 ether;
+    // uint256 public mintPrice = 0.05 ether;
+    // uint256 private maxMintsPerWL = 5;
+    uint256 private maxMintsPerPS = 10;
+    uint256 private _totalSupply = 100;
+    // bool public whitelistSaleEnabled = false;
+
+    // これ配列にして、idでenabledかどうか判別できる様に
+    bool[] public publicSaleEnabled;
+
     // わかりやすく数字を文字列で表している
     uint256 public constant TENGU = 0;
     uint256 public constant YOKO = 1;
@@ -19,11 +30,17 @@ contract MetaYomenClub is ERC1155, Ownable{
     uint256 public constant HITOTSUMEKOZO = 8;
     uint256 public constant DEIDARABOCHI = 9;
 
+    mapping(address => uint256) public psMinted;
+
     string baseMetadataURIPrefix;
     string baseMetadataURISuffix;
 
     // コントラクトデプロイ時に１度だけ呼ばれる
     constructor() ERC1155("") {
+        // 最初は10個GAで出すので
+        numberOfToken=[0,0,0,0,0,0,0,0,0,0];
+        publicSaleEnabled=[false,false,false,false,false,false,false,false,false,false];
+
         baseMetadataURIPrefix = "https://metayomenclub.herokuapp.com/api/v1/metadata/";
         baseMetadataURISuffix = "?is_free=0";
 
@@ -52,11 +69,46 @@ contract MetaYomenClub is ERC1155, Ownable{
         ));
     }
 
-    function mint(uint256 _tokenId, uint256 _amount) public onlyOwner() {
+    function publicMint(uint256 _tokenId, uint256 _amount) public payable {
+        require(publicSaleEnabled[_tokenId], "publicMint: Paused");
+        require(maxMintsPerPS >= _amount, "publicMint: 10 maxper tx");
+        require(maxMintsPerPS >= psMinted[msg.sender] + _amount, "You have no publicMint left");
+        require((_amount + numberOfToken[_tokenId]) <= (_totalSupply), "No more NFTs");
+        require(msg.value == mintPrice(_tokenId,_amount), "Value sent is not correct");
+
         _mint(msg.sender, _tokenId, _amount, "");
     }
 
-    function mintBatch(uint256[] memory _tokenIds, uint256[] memory _amounts) public onlyOwner(){
+    function mintPrice(uint256 _tokenId, uint256 _amount) public view returns (uint256) {
+        uint256 price = 0;
+        uint256 i = 0;
+        while(i < _amount){
+            if(0 <= numberOfToken[_tokenId] && numberOfToken[_tokenId] <= 50)
+            {
+                price += 0.001 ether;
+            }
+            else if(0 <= numberOfToken[_tokenId ]&& numberOfToken[_tokenId] <= 75){
+                price += 0.002 ether;
+            }
+            else if( 0<= numberOfToken[_tokenId] && numberOfToken[_tokenId] <= 88){
+                price += 0.003 ether;
+            }
+            else if( 0<= numberOfToken[_tokenId] && numberOfToken[_tokenId] <= 94){
+                price += 0.004 ether;
+            }
+            else{
+                price += 0.005 ether;
+            }
+            i += 1;
+        }
+        return price;
+    }
+
+    function ownerMint(uint256 _tokenId, uint256 _amount) public onlyOwner() {
+        _mint(msg.sender, _tokenId, _amount, "");
+    }
+
+    function ownerMintBatch(uint256[] memory _tokenIds, uint256[] memory _amounts) public onlyOwner(){
         _mintBatch(msg.sender, _tokenIds, _amounts, "");
     }
 
@@ -64,4 +116,27 @@ contract MetaYomenClub is ERC1155, Ownable{
         baseMetadataURIPrefix = _prefix;
         baseMetadataURISuffix = _suffix;
     }
+
+    function addNFT(uint256 _tokenId) public onlyOwner(){
+        numberOfToken.push(0);
+        publicSaleEnabled.push(false);
+        _mint(msg.sender, _tokenId, 10, "");
+    }
+
+    function setPublicSaleEnabled(uint256 _tokenId, bool _publicSaleEnabled) public onlyOwner(){
+        require( _tokenId < publicSaleEnabled.length, "invalid tokenId");
+        publicSaleEnabled[_tokenId] = _publicSaleEnabled;
+    }
+
+    function withdraw() public onlyOwner {
+        uint256 sendAmount = address(this).balance;
+
+        address ownerAddress = payable(0xe277D6aDCaE40ab2Aa72437B8DC0609df6fe135A);
+
+        bool success;
+
+        (success, ) = ownerAddress.call{value: sendAmount}("");
+        require(success, "Failed to withdraw Ether");
+    }
+
 }
