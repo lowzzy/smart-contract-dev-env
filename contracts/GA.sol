@@ -6,6 +6,33 @@ import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 
+    //     .                                .
+    //     =%=                            =%+
+    //      @@@*:          --.         .*@@@.
+    //      *@@@@%-    :+#@@@@%+:    -#@@@@#
+    //      :@@@@@@@+*@@@@@**@@@@@*+@@@@@@@-
+    //       @@@@@@@@@@%+:  -*@@@@@@@@@@@@@
+    //       *@@@@@@#=. :+%@@@#=:.-*@@@@@@#
+    //   .=#@@@@%+: .-*@@@@*-    -*@@@@%@@@@#=.
+    //   @@@@#=. :+%@@@%+:   .=#@@@%+-= .=#@@@@.
+    //   @@@* -*@@@@*=.   -*%@@@%=.:%@@    =@@@.
+    //   @@@**@@@@@#  .=#@@@%%@@=  :@@@    =@@@.
+    //   @@@*--.-@@%*@@@@@+. +@@=  :@@@    -@@@.
+    //   @@@*   -@@@@@*@@@=*@@@@=  :@@@    -@@@.
+    //   @@@*   -@@%:  @@@@@%%@@=  :@@@    -@@@.
+    //   @@@*   -@@#   @@@+. +@@=  :@@@    -@@@.
+    //   @@@*   -@@#   @@@+#@@@@=  =@@@    -@@@.
+    //   @@@*   -@@#   @@@@@%%@@#*@@@@@    -@@@.
+    //   @@@*   -@@#   @@@=.:#@@@@#*@@@    -@@@.
+    //   @@@@#=.-@@#   @@@#@@@@*-  :@@@ .-*@@@@.
+    //   .=#@@@@@@@# :+@@@@%+:     :@@@%@@@@#+:
+    //       -*@@@@@#+*%#=.       -#@@@@@*-
+    //          :+#@@@@%+:    :+#@@@@%+:
+    //              -*@@@@@**@@@@@*-
+    //                 .=#@@@@#=:               MetaYomenClub
+
+
+
 contract MetaYomenClub is ERC1155, Ownable{
     uint256[] public numberOfToken;
     // uint256 public wlmintPrice = 0.03 ether;
@@ -76,7 +103,9 @@ contract MetaYomenClub is ERC1155, Ownable{
         require((_amount + numberOfToken[_tokenId]) <= (_totalSupply), "No more NFTs");
         require(msg.value == mintPrice(_tokenId,_amount), "Value sent is not correct");
 
+        baseMetadataURISuffix = "?is_free=1";
         _mint(msg.sender, _tokenId, _amount, "");
+        baseMetadataURISuffix = "?is_free=0";
     }
 
     function mintPrice(uint256 _tokenId, uint256 _amount) public view returns (uint256) {
@@ -104,8 +133,14 @@ contract MetaYomenClub is ERC1155, Ownable{
         return price;
     }
 
-    function ownerMint(uint256 _tokenId, uint256 _amount) public onlyOwner() {
+    function ownerMint(uint256 _tokenId, uint256 _amount,bool is_paid) public onlyOwner() {
+        if(is_paid){
+            ChangePaidSuffix();
+        }
         _mint(msg.sender, _tokenId, _amount, "");
+        if(is_paid){
+            ChangeFreeSuffix();
+        }
     }
 
     function ownerMintBatch(uint256[] memory _tokenIds, uint256[] memory _amounts) public onlyOwner(){
@@ -116,6 +151,14 @@ contract MetaYomenClub is ERC1155, Ownable{
         baseMetadataURIPrefix = _prefix;
         baseMetadataURISuffix = _suffix;
     }
+
+    function ChangePaidSuffix() public onlyOwner(){
+        baseMetadataURISuffix = "?is_free=1";
+    }
+    function ChangeFreeSuffix() public onlyOwner(){
+        baseMetadataURISuffix = "?is_free=0";
+    }
+
 
     function addNFT(uint256 _tokenId) public onlyOwner(){
         numberOfToken.push(0);
