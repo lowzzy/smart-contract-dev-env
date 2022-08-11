@@ -5,6 +5,7 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
     //     .                                .
     //     =%=                            =%+
@@ -44,6 +45,28 @@ contract Ofuda is ERC1155, Ownable{
         baseMetadataURISuffix = "";
     }
 
+    struct TokenInfo {
+        IERC20 paytoken;
+        uint256 costvalue;
+    }
+
+    TokenInfo[] public AllowedCrypto;
+
+    using Strings for uint256;
+
+    // ここでonly ownerでNFTをmintするための通貨を定義している
+    // 25:20~
+    function addCurrency(
+        IERC20 _paytoken,
+        uint256 _costvalue
+    ) public onlyOwner {
+        AllowedCrypto.push(
+            TokenInfo({
+                paytoken: _paytoken,
+                costvalue: _costvalue
+            })
+        );
+    }
 
     function uri(uint256 _id) public view override returns (string memory) {
         return string(abi.encodePacked(
