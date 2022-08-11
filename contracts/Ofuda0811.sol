@@ -89,7 +89,8 @@ contract Ofuda is ERC1155, Ownable{
         cost = tokens.costvalue;
         // require(!paused);
         require(_mintAmount > 0);
-        require(msg.value == cost * _mintAmount, "Not enough balance to complete transaction.");
+        uint256 allowCost = paytoken.allowance(msg.sender,address(this));
+        require(allowCost >= cost * _mintAmount, "Not enough balance to complete transaction.");
 
         for (uint256 i = 1; i <= _mintAmount; i++) {
             // ここでerc20の通貨をこのアドレスにtransferしてもらっている.
