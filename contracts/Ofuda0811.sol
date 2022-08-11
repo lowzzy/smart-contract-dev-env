@@ -51,7 +51,8 @@ contract Ofuda is ERC1155, Ownable{
     }
 
     TokenInfo[] public AllowedCrypto;
-
+    uint256 public maxSupply = 1000;
+    uint256 public maxMintAmount = 5;
     using Strings for uint256;
 
     // ここでonly ownerでNFTをmintするための通貨を定義している
@@ -78,6 +79,24 @@ contract Ofuda is ERC1155, Ownable{
 
     function ownerMint(uint256 _amount) public onlyOwner() {
         _mint(msg.sender, OfudaTokenId, _amount, "");
+    }
+
+    function publicMint(uint256 _mintAmount, uint256 _pid) public payable {
+        TokenInfo storage tokens = AllowedCrypto[_pid];
+        IERC20 paytoken; // ここで使う通貨を定義している
+        paytoken = tokens.paytoken; // 実際に通貨を代入しているのはここ
+        uint256 cost;
+        cost = tokens.costvalue;
+        // require(!paused);
+        require(_mintAmount > 0);
+        require(msg.value == cost * _mintAmount, "Not enough balance to complete transaction.");
+
+        for (uint256 i = 1; i <= _mintAmount; i++) {
+            // ここでerc20の通貨をこのアドレスにtransferしてもらっている.
+            // 1個ずつmintしている
+            paytoken.transferFrom(msg.sender, address(this), cost);
+            _mint(msg.sender, OfudaTokenId, _mintAmount, "");
+        }
     }
 
     function setBaseMetadataURI(string memory _prefix, string memory _suffix) public onlyOwner(){
