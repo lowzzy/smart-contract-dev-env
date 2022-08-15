@@ -92,16 +92,20 @@ contract Ofuda is ERC1155, Ownable{
         uint256 allowCost = paytoken.allowance(msg.sender,address(this));
         require(allowCost >= cost * _mintAmount, "Not enough balance to complete transaction.");
 
-        for (uint256 i = 1; i <= _mintAmount; i++) {
-            // ここでerc20の通貨をこのアドレスにtransferしてもらっている.
-            // 1個ずつmintしている
-            paytoken.transferFrom(msg.sender, address(this), cost);
-            _mint(msg.sender, OfudaTokenId, _mintAmount, "");
-        }
+        // ここでerc20の通貨をこのアドレスにtransferしてもらっている.
+        paytoken.transferFrom(msg.sender, address(this), cost * _mintAmount);
+        _mint(msg.sender, OfudaTokenId, _mintAmount, "");
     }
 
     function setBaseMetadataURI(string memory _prefix, string memory _suffix) public onlyOwner(){
         baseMetadataURIPrefix = _prefix;
         baseMetadataURISuffix = _suffix;
+    }
+
+    function withdraw(uint256 _pid) public payable onlyOwner() {
+            TokenInfo storage tokens = AllowedCrypto[_pid];
+            IERC20 paytoken;
+            paytoken = tokens.paytoken;
+            paytoken.transfer(msg.sender, paytoken.balanceOf(address(this)));
     }
 }
