@@ -36,7 +36,7 @@ contract Collection is ERC721Enumerable, Ownable {
         }else if(80 <= _id && _id < 100 ){
             return RankCcost;
         }
-        return RankAcost;
+        return 0;
     }
 
     function mintTotalCost(uint256[] memory _ids) public pure returns (uint256) {
@@ -69,6 +69,7 @@ contract Collection is ERC721Enumerable, Ownable {
     function preMint(uint256[] memory _ids) public payable {
         uint256 whiteListId = 0;
         uint256 wlBalance = wl.balanceOf(msg.sender, whiteListId);
+        // allowance
         bool used;
         used = wlUsed[msg.sender];
         require(wlBalance > 0 || used, "msg.sender has no WhiteList.");
