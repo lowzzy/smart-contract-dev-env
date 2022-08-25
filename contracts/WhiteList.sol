@@ -5,24 +5,38 @@
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
+import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
+
 
 pragma solidity ^0.8.0;
 
-contract Collection is ERC721Enumerable, Ownable {
+contract Collection is ERC1155, Ownable {
+    string baseMetadataURIPrefix;
+    string baseMetadataURISuffix;
+    using Strings for uint256;
 
-    constructor() ERC721("Sample", "SPL") {}
 
-
-    function _baseURI() internal view virtual override returns (string memory) {
-    return "ipfs://EE5MmqVp5MmqVp7ZRMBBizicVh9ficVh9fjUofWicVh9f/";
+    constructor() ERC1155("") {
+        baseMetadataURIPrefix = "https://staging--goldfish-japan.netlify.app/.netlify/functions/tokenURI/";
+        baseMetadataURISuffix = "";
     }
 
-    // idが0からじゃないなあ、、
+    function uri(uint256 _id) public view override returns (string memory) {
+        return string(abi.encodePacked(
+            baseMetadataURIPrefix,
+            Strings.toString(_id),
+            baseMetadataURISuffix
+        ));
+    }
     function ownerMint(uint256 _amount) public onlyOwner() {
-        uint256 supply = totalSupply();
-        for (uint256 i = 1; i <= _amount; i++) {
-            _safeMint(msg.sender, supply + i);
-        }
+        uint256 WhiteListTokenId = 0;
+        _mint(msg.sender, WhiteListTokenId, _amount, "");
     }
+
+    function setBaseMetadataURI(string memory _prefix, string memory _suffix) public onlyOwner(){
+        baseMetadataURIPrefix = _prefix;
+        baseMetadataURISuffix = _suffix;
+    }
+
 }
