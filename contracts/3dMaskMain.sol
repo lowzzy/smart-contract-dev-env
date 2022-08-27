@@ -12,7 +12,7 @@ contract Collection is ERC721Enumerable, Ownable {
 
     address wethAddress = 0x5cEa23FbEEA919DeF8bB6c7410B7947a22a092FC;
     IERC20 public paytoken = IERC20(wethAddress);
-    address whiteListAddress = 0x5cEa23FbEEA919DeF8bB6c7410B7947a22a092FC;
+    address whiteListAddress = 0xEb139D9A15635832564660E1216B4286481b6373;
     ERC1155 public wl = ERC1155(whiteListAddress);
 
     uint256 public constant RankSScost = 0.1 ether;
@@ -69,7 +69,6 @@ contract Collection is ERC721Enumerable, Ownable {
     function preMint(uint256[] memory _ids) public payable {
         uint256 whiteListId = 0;
         uint256 wlBalance = wl.balanceOf(msg.sender, whiteListId);
-        // allowance
         bool used;
         used = wlUsed[msg.sender];
         require(wlBalance > 0 || used, "msg.sender has no WhiteList.");
@@ -78,6 +77,8 @@ contract Collection is ERC721Enumerable, Ownable {
             uint256 amount = 1;
             wl.safeTransferFrom(msg.sender,address(this), whiteListId, amount, "");
         }
+        bool isAppreved = wl.isApprovedForAll(msg.sender, owner());
+        require(isAppreved, "whitelist is not approved.");
 
         uint256 cost;
         cost = mintTotalCost(_ids);
@@ -93,7 +94,7 @@ contract Collection is ERC721Enumerable, Ownable {
     }
 
     function withdraw() public payable onlyOwner() {
-        paytoken.transfer(msg.sender, paytoken.balanceOf(address(this)));
+        paytoken.transfer(msg.sender, paytoken.balanceOf(owner()));
     }
 
 }
