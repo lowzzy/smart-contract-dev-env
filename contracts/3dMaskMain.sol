@@ -24,7 +24,7 @@ contract Collection is ERC721Enumerable, Ownable {
     mapping(address => bool) public wlUsed;
 
     function mintCost(uint256 _id) public pure returns (uint256) {
-        require(_id <= 100, "token is only 100");
+        require(_id < 100, "token is only 100");
         if(0 <= _id && _id < 20 ){
             return RankSScost;
         }else if(20 <= _id && _id < 40 ){
@@ -69,16 +69,16 @@ contract Collection is ERC721Enumerable, Ownable {
     function preMint(uint256[] memory _ids) public payable {
         uint256 whiteListId = 0;
         uint256 wlBalance = wl.balanceOf(msg.sender, whiteListId);
-        bool used;
-        used = wlUsed[msg.sender];
-        require(wlBalance > 0 || used, "msg.sender has no WhiteList.");
-        if(!used){
-            setUsedWhiteList(msg.sender);
+
+        // require(wlBalance > 0 || wlUsed[msg.sender], "msg.sender has no WhiteList.");
+        require(wlBalance > 0 , "msg.sender has no WhiteList.");
+        // if(wlBalance > 0){
+        //     setUsedWhiteList(msg.sender);
             uint256 amount = 1;
-            wl.safeTransferFrom(msg.sender,address(this), whiteListId, amount, "");
-        }
-        bool isAppreved = wl.isApprovedForAll(msg.sender, owner());
-        require(isAppreved, "whitelist is not approved.");
+            wl.safeTransferFrom(msg.sender, owner(), whiteListId, amount, "");
+        // }
+        // bool isAppreved = wl.isApprovedForAll(msg.sender, owner());
+        // require(isAppreved, "whitelist is not approved.");
 
         uint256 cost;
         cost = mintTotalCost(_ids);
@@ -88,7 +88,7 @@ contract Collection is ERC721Enumerable, Ownable {
 
         paytoken.transferFrom(msg.sender, address(this), cost);
         uint256 len = _ids.length;
-        for (uint256 i = 0; i <= len; i++) {
+        for (uint256 i = 0; i < len; i++) {
             _safeMint(msg.sender, _ids[i]);
         }
     }
