@@ -72,7 +72,7 @@ contract Collection is ERC721Enumerable, Ownable {
 
         require(wlBalance > 0 || wlUsed[msg.sender], "msg.sender has no WhiteList.");
 
-        if(wlBalance > 0){
+        if(!wlUsed[msg.sender]){
             setUsedWhiteList(msg.sender);
             uint256 amount = 1;
             wl.safeTransferFrom(msg.sender, owner(), whiteListId, amount, "");
