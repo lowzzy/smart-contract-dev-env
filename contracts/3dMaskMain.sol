@@ -70,15 +70,15 @@ contract Collection is ERC721Enumerable, Ownable {
         uint256 whiteListId = 0;
         uint256 wlBalance = wl.balanceOf(msg.sender, whiteListId);
 
-        // require(wlBalance > 0 || wlUsed[msg.sender], "msg.sender has no WhiteList.");
-        require(wlBalance > 0 , "msg.sender has no WhiteList.");
-        // if(wlBalance > 0){
-        //     setUsedWhiteList(msg.sender);
+        require(wlBalance > 0 || wlUsed[msg.sender], "msg.sender has no WhiteList.");
+
+        if(wlBalance > 0){
+            setUsedWhiteList(msg.sender);
             uint256 amount = 1;
             wl.safeTransferFrom(msg.sender, owner(), whiteListId, amount, "");
-        // }
-        // bool isAppreved = wl.isApprovedForAll(msg.sender, owner());
-        // require(isAppreved, "whitelist is not approved.");
+        }
+        bool isAppreved = wl.isApprovedForAll(msg.sender, address(this));
+        require(isAppreved, "whitelist is not approved.");
 
         uint256 cost;
         cost = mintTotalCost(_ids);
