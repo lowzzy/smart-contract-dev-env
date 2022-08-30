@@ -53,6 +53,9 @@ contract Ofuda is ERC1155, Ownable{
     TokenInfo[] public AllowedCrypto;
     uint256 public maxSupply = 1000;
     uint256 public maxMintAmount = 5;
+    uint256 public stock = 0;
+    bool public paused = false;
+
     using Strings for uint256;
 
     // ここでonly ownerでNFTをmintするための通貨を定義している
@@ -69,6 +72,23 @@ contract Ofuda is ERC1155, Ownable{
         );
     }
 
+    function changeCost(
+        uint256 _pid,
+        uint256 _newCostvalue
+    ) public onlyOwner {
+        AllowedCrypto[_pid].costvalue = _newCostvalue;
+    }
+
+    function changeStock(
+        uint256 _stock
+    ) public onlyOwner {
+        stock = _stock;
+    }
+
+    function pause(bool _state) public onlyOwner() {
+            paused = _state;
+    }
+
     function uri(uint256 _id) public view override returns (string memory) {
         return string(abi.encodePacked(
             baseMetadataURIPrefix,
@@ -82,19 +102,22 @@ contract Ofuda is ERC1155, Ownable{
     }
 
     function publicMint(uint256 _mintAmount, uint256 _pid) public payable {
+        require(!paused, "public mint : Paused");
+        require(stock >= _mintAmount, "Not enough stock of ofuda");
         TokenInfo storage tokens = AllowedCrypto[_pid];
         IERC20 paytoken; // ここで使う通貨を定義している
         paytoken = tokens.paytoken; // 実際に通貨を代入しているのはここ
         uint256 cost;
         cost = tokens.costvalue;
-        // require(!paused);
         require(_mintAmount > 0);
         uint256 allowCost = paytoken.allowance(msg.sender,address(this));
-        require(allowCost >= cost * _mintAmount, "Not enough balance to complete transaction.");
+        require(allowCost >= cost * _mintAmount, "Not enough balance to complete transaction");
 
         // ここでerc20の通貨をこのアドレスにtransferしてもらっている.
+        // 1個ずつmintしている
         paytoken.transferFrom(msg.sender, address(this), cost * _mintAmount);
         _mint(msg.sender, OfudaTokenId, _mintAmount, "");
+        stock -= _mintAmount;
     }
 
     function setBaseMetadataURI(string memory _prefix, string memory _suffix) public onlyOwner(){
