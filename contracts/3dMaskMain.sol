@@ -94,7 +94,7 @@ contract Collection is ERC721Enumerable, Ownable {
     }
 
     function withdraw() public payable onlyOwner() {
-        paytoken.transfer(msg.sender, paytoken.balanceOf(owner()));
+        paytoken.transfer(msg.sender, paytoken.balanceOf(address(this)));
     }
 
 }
