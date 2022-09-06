@@ -108,6 +108,7 @@ contract Collection is ERC1155, Ownable {
     }
 
     function publicMint(uint256 _pid,uint256[] memory _ids ,uint256[] memory _amounts) public payable {
+        require(!includeRankSS(_ids), "Rank SS token is not able to purchase.");
         //　指定の価格で買えるような実装をする
         uint256 cost = getCost(_pid, _ids,_amounts);
         TokenInfo storage tokens = AllowedCrypto[_pid];
@@ -133,6 +134,21 @@ contract Collection is ERC1155, Ownable {
             i++;
         }
         return totalCost;
+    }
+
+    function includeRankSS(uint256[] memory _ids) public view returns (bool){
+        uint256 len = _ids.length;
+        bool included = true;
+        bool notIncluded = false;
+
+        uint256 i = 0;
+        while(i < len){
+            if(_ids[i] == rankTokenSS[0] || _ids[i] == rankTokenSS[1]){
+                return included;
+            }
+            i++;
+        }
+        return notIncluded;
     }
 
     function gachaMint(uint256 _amount) public payable {
