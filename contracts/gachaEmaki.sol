@@ -33,44 +33,67 @@ contract Collection is ERC1155, Ownable {
 
     uint256 randNonce = 0;
 
-    mapping(uint256=>uint256) public prices;
+    struct TokenInfo {
+        IERC20 paytoken;
+        uint256[] costvalues;
+    }
+
+    TokenInfo[] public AllowedCrypto;
+
+    function addCurrency(
+        IERC20 _paytoken,
+        uint256[] memory _costvalues
+    ) public onlyOwner {
+        require(_costvalues.length == 10, "token number is 10.");
+        AllowedCrypto.push(
+            TokenInfo({
+                paytoken: _paytoken,
+                costvalues: _costvalues
+            })
+        );
+    }
+
 
     uint256[] rankTokenB = [HANNYA,TENGU,YOKO];
     uint256[] rankTokenA = [KAMAITACHI,WANYUDO,GYUKI];
     uint256[] rankTokenS = [YAMATANOROCHI,KYUBI];
     uint256[] rankTokenSS = [FUZIN,RAIZIN];
-    // mapping(uint=>uint[4]) public rankedTokens;
 
-    uint256[][] public rankedTokens= [
+    uint256[][] public rankedTokens = [
         rankTokenB,rankTokenA,rankTokenS,rankTokenSS
     ];
-        string name;
-        string symbol;
+        string public name;
+        string public symbol;
+    uint256[] gfcCostvalues;
 
     constructor() ERC1155("") {
-        name ="sample";
+
+        name = "sample";
         symbol = "SPL";
         baseMetadataURIPrefix = "";
         baseMetadataURISuffix = "";
         uint256 degit = 1000000000000000000;
 
-        // SS
-        prices[FUZIN] = 100 * degit;
-        prices[RAIZIN] = 100 * degit;
-
-        // S
-        prices[YAMATANOROCHI] = 50 * degit;
-        prices[KYUBI] = 50 * degit;
+        // B
+        gfcCostvalues.push(10 * degit);
+        gfcCostvalues.push(10 * degit);
+        gfcCostvalues.push(10 * degit);
 
         // A
-        prices[KAMAITACHI] = 30 * degit;
-        prices[WANYUDO] = 30 * degit;
-        prices[GYUKI] = 30 * degit;
+        gfcCostvalues.push(30 * degit);
+        gfcCostvalues.push(30 * degit);
+        gfcCostvalues.push(30 * degit);
 
-        // B
-        prices[YOKO] = 10 * degit;
-        prices[HANNYA] = 10 * degit;
-        prices[TENGU] = 10 * degit;
+        // S
+        gfcCostvalues.push(50 * degit);
+        gfcCostvalues.push(50 * degit);
+
+
+        // SS
+        gfcCostvalues.push(100 * degit);
+        gfcCostvalues.push(100 * degit);
+        IERC20 GFC = IERC20(0x5cEa23FbEEA919DeF8bB6c7410B7947a22a092FC);
+        addCurrency(GFC,gfcCostvalues);
     }
 
     function uri(uint256 _id) public view override returns (string memory) {
@@ -84,12 +107,36 @@ contract Collection is ERC1155, Ownable {
         _mint(msg.sender, _id, _amount, "");
     }
 
-    function publicMint(uint256 _amount) public payable {
+    function publicMint(uint256 _pid,uint256[] memory _ids ,uint256[] memory _amounts) public payable {
         //　指定の価格で買えるような実装をする
-
+        uint256 cost = getCost(_pid, _ids,_amounts);
+        TokenInfo storage tokens = AllowedCrypto[_pid];
+        IERC20 paytoken;
+        paytoken = tokens.paytoken;
+        uint256 allowCost = paytoken.allowance(msg.sender,address(this));
+        require(allowCost >= cost, "Not enough balance to complete transaction.");
+        paytoken.transferFrom(msg.sender, address(this), cost);
+        _mintBatch(msg.sender, _ids, _amounts, "");
     }
 
-    function gachaMint(uint256 _amount) public {
+    function getCost(uint256 _pid, uint256[] memory _amounts,uint256[] memory _ids) public view returns (uint256){
+        TokenInfo storage tokens = AllowedCrypto[_pid];
+        uint256 totalCost = 0;
+        uint256[] storage costvalues = tokens.costvalues;
+        uint256 length = _amounts.length;
+        uint256 i = 0;
+        while(i < length){
+            uint256 id = _ids[i];
+            uint256 amount = _amounts[i];
+            uint256 cost = costvalues[id] * amount;
+            totalCost += cost;
+            i++;
+        }
+        return totalCost;
+    }
+
+    function gachaMint(uint256 _amount) public payable {
+        // ここにgfcのtransfer周りの実装を追加する
         uint256 num;
         uint256 id;
         for (uint256 i = 1; i <= _amount; i++) {
@@ -148,8 +195,8 @@ contract Collection is ERC1155, Ownable {
     function changeProbabilities(uint256 _pid,uint256 probability) public onlyOwner() {
     // 確率いじれるようにする
     }
-    function changePrices(uint256 _pid,uint256 price) public onlyOwner() {
-        prices[_pid] = price;
+    function changeCostvalue(uint256 _pid,uint256 _id,uint256 _newCostvalue) public onlyOwner() {
+        AllowedCrypto[_pid].costvalues[_id] =  _newCostvalue;
     }
 
 
