@@ -1,6 +1,3 @@
-// https://www.youtube.com/watch?v=nZmEI0xKOqA
-// 13:30あたりでerc20通貨をerc721コントラクトに送ってmintして、、、みたいな説明をしている
-
 // SPDX-License-Identifier: MIT LICENSE
 
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -11,15 +8,19 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 
 pragma solidity ^0.8.0;
 
-contract Collection is ERC1155, Ownable {
+contract WhiteListToken is ERC1155, Ownable {
     string baseMetadataURIPrefix;
     string baseMetadataURISuffix;
     using Strings for uint256;
 
+    string public name;
+    string public symbol;
 
     constructor() ERC1155("") {
-        baseMetadataURIPrefix = "https://staging--goldfish-japan.netlify.app/.netlify/functions/tokenURI/";
-        baseMetadataURISuffix = "";
+        name ="MYC WhiteList";
+        symbol = "WL";
+        baseMetadataURIPrefix = "https://metayomenclub.herokuapp.com/api/v1/metadata/";
+        baseMetadataURISuffix = "/whitelist";
     }
 
     function uri(uint256 _id) public view override returns (string memory) {
@@ -38,5 +39,4 @@ contract Collection is ERC1155, Ownable {
         baseMetadataURIPrefix = _prefix;
         baseMetadataURISuffix = _suffix;
     }
-
 }
