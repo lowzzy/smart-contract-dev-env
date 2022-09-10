@@ -53,4 +53,11 @@ function swap(uint256[] memory _fromIds, uint256[] memory _amounts, uint256 _toI
     Emaki.safeTransferFrom(owner(), msg.sender,_toId,1,"");
 }
 
+function changeValues() public {
+}
+
+function addValues() public {
+}
+
+
 }
