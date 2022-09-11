@@ -30,29 +30,30 @@ contract Collection is ERC1155, Ownable {
     uint256 public constant HANNYA = 2;
     uint256 public constant TENGU = 1;
     uint256 public constant YOKO = 0;
+    bool public paused;
 
     uint256 randNonce = 0;
 
+    uint256[] public probabilities;
+
     struct TokenInfo {
         IERC20 paytoken;
-        uint256[] costvalues;
+        uint256 costvalue;
     }
 
     TokenInfo[] public AllowedCrypto;
 
     function addCurrency(
         IERC20 _paytoken,
-        uint256[] memory _costvalues
+        uint256 _costvalue
     ) public onlyOwner {
-        require(_costvalues.length == 10, "token number is 10.");
         AllowedCrypto.push(
             TokenInfo({
                 paytoken: _paytoken,
-                costvalues: _costvalues
+                costvalue: _costvalue
             })
         );
     }
-
 
     uint256[] rankTokenB = [HANNYA,TENGU,YOKO];
     uint256[] rankTokenA = [KAMAITACHI,WANYUDO,GYUKI];
@@ -64,7 +65,6 @@ contract Collection is ERC1155, Ownable {
     ];
         string public name;
         string public symbol;
-    uint256[] gfcCostvalues;
 
     constructor() ERC1155("") {
 
@@ -72,29 +72,11 @@ contract Collection is ERC1155, Ownable {
         symbol = "SPL";
         baseMetadataURIPrefix = "";
         baseMetadataURISuffix = "";
-        uint256 degit = 1000000000000000000;
-
-        // B
-        gfcCostvalues.push(10 * degit);
-        gfcCostvalues.push(10 * degit);
-        gfcCostvalues.push(10 * degit);
-
-        // A
-        gfcCostvalues.push(30 * degit);
-        gfcCostvalues.push(30 * degit);
-        gfcCostvalues.push(30 * degit);
-
-        // S
-        gfcCostvalues.push(50 * degit);
-        gfcCostvalues.push(50 * degit);
-
-
-        // SS
-        gfcCostvalues.push(100 * degit);
-        gfcCostvalues.push(100 * degit);
-        IERC20 GFC = IERC20(0x5cEa23FbEEA919DeF8bB6c7410B7947a22a092FC);
-        addCurrency(GFC,gfcCostvalues);
+        probabilities = [
+            50,30,15,5
+        ];
     }
+
 
     function uri(uint256 _id) public view override returns (string memory) {
         return string(abi.encodePacked(
@@ -107,52 +89,18 @@ contract Collection is ERC1155, Ownable {
         _mint(msg.sender, _id, _amount, "");
     }
 
-    function publicMint(uint256 _pid,uint256[] memory _ids ,uint256[] memory _amounts) public payable {
-        require(!includeRankSS(_ids), "Rank SS token is not able to purchase.");
-        //　指定の価格で買えるような実装をする
-        uint256 cost = getCost(_pid, _ids,_amounts);
+
+    function gachaMint(uint256 _pid, uint256 _amount) public payable {
+        require(!paused, "gacha : Paused");
         TokenInfo storage tokens = AllowedCrypto[_pid];
         IERC20 paytoken;
         paytoken = tokens.paytoken;
+        uint256 cost;
+        cost = tokens.costvalue * _amount;
         uint256 allowCost = paytoken.allowance(msg.sender,address(this));
-        require(allowCost >= cost, "Not enough balance to complete transaction.");
+        require(allowCost >= cost * _amount, "Not enough balance to complete transaction");
         paytoken.transferFrom(msg.sender, address(this), cost);
-        _mintBatch(msg.sender, _ids, _amounts, "");
-    }
 
-    function getCost(uint256 _pid, uint256[] memory _amounts,uint256[] memory _ids) public view returns (uint256){
-        TokenInfo storage tokens = AllowedCrypto[_pid];
-        uint256 totalCost = 0;
-        uint256[] storage costvalues = tokens.costvalues;
-        uint256 length = _amounts.length;
-        uint256 i = 0;
-        while(i < length){
-            uint256 id = _ids[i];
-            uint256 amount = _amounts[i];
-            uint256 cost = costvalues[id] * amount;
-            totalCost += cost;
-            i++;
-        }
-        return totalCost;
-    }
-
-    function includeRankSS(uint256[] memory _ids) public view returns (bool){
-        uint256 len = _ids.length;
-        bool included = true;
-        bool notIncluded = false;
-
-        uint256 i = 0;
-        while(i < len){
-            if(_ids[i] == rankTokenSS[0] || _ids[i] == rankTokenSS[1]){
-                return included;
-            }
-            i++;
-        }
-        return notIncluded;
-    }
-
-    function gachaMint(uint256 _amount) public payable {
-        // ここにgfcのtransfer周りの実装を追加する
         uint256 num;
         uint256 id;
         for (uint256 i = 1; i <= _amount; i++) {
@@ -165,20 +113,25 @@ contract Collection is ERC1155, Ownable {
 
     function getId(uint256 _num) public returns (uint256){
         uint256 id = _num % 100;
-        if(0 <= id && id < 50){
+        uint256 probability_b = probabilities[0];
+        uint256 probability_a = probabilities[0] + probabilities[1];
+        uint256 probability_s = probabilities[0] + probabilities[1]+ probabilities[2];
+        uint256 probability_ss = probabilities[0] + probabilities[1] + probabilities[2] + probabilities[3];
+
+
+        if(0 <= id && id < probability_b){
             uint256 rankB = 0;
             return getRandomFromRank(rankB);
-        }else if(50 <= id && id < 80){
+        }else if(probability_b <= id && id < probability_a){
             uint256 rankA = 1;
             return getRandomFromRank(rankA);
-        }else if(80 <= id && id < 95){
+        }else if(probability_a <= id && id < probability_s){
             uint256 rankS = 2;
             return getRandomFromRank(rankS);
-        }else if(95 <= id){
+        }else if(probability_s <= id && id < probability_ss){
             uint256 rankSS = 3;
             return getRandomFromRank(rankSS);
         }
-        // require("ERROR in getId function.");
         return 0;
     }
 
@@ -208,12 +161,20 @@ contract Collection is ERC1155, Ownable {
         baseMetadataURIPrefix = _prefix;
         baseMetadataURISuffix = _suffix;
     }
+
     function changeProbabilities(uint256 _pid,uint256 probability) public onlyOwner() {
-    // 確率いじれるようにする
+        probabilities[_pid] = probability;
     }
-    function changeCostvalue(uint256 _pid,uint256 _id,uint256 _newCostvalue) public onlyOwner() {
-        AllowedCrypto[_pid].costvalues[_id] =  _newCostvalue;
+
+    function changeCost(
+        uint256 _pid,
+        uint256 _newCostvalue
+    ) public onlyOwner {
+        AllowedCrypto[_pid].costvalue = _newCostvalue;
     }
 
 
+    function pause(bool _state) public onlyOwner() {
+        paused = _state;
+    }
 }
