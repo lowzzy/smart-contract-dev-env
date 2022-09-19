@@ -20,16 +20,16 @@ contract Collection is ERC1155, Ownable {
     uint256 public constant FUZIN = 9;
     uint256 public constant RAIZIN = 8;
     // S
-    uint256 public constant YAMATANOROCHI = 7;
+    uint256 public constant YAMATANOROCHI = 4;
     uint256 public constant KYUBI = 6;
     // A
-    uint256 public constant KAMAITACHI = 5;
-    uint256 public constant WANYUDO =4;
-    uint256 public constant GYUKI = 3;
+    uint256 public constant KAMAITACHI = 2;
+    uint256 public constant WANYUDO = 1;
+    uint256 public constant GYUKI = 7;
     // B
-    uint256 public constant HANNYA = 2;
-    uint256 public constant TENGU = 1;
-    uint256 public constant YOKO = 0;
+    uint256 public constant HANNYA = 3;
+    uint256 public constant TENGU = 0;
+    uint256 public constant YOKO = 5;
     bool public paused;
 
     uint256 randNonce = 0;
@@ -68,10 +68,10 @@ contract Collection is ERC1155, Ownable {
 
     constructor() ERC1155("") {
 
-        name = "sample";
-        symbol = "SPL";
-        baseMetadataURIPrefix = "";
-        baseMetadataURISuffix = "";
+        name = "MetaYomenClub Emaki";
+        symbol = "EMAKI";
+        baseMetadataURIPrefix = "https://metayomenclub.herokuapp.com/api/v1/metadata/";
+        baseMetadataURISuffix = "/emaki";
         probabilities = [
             50,30,15,5
         ];
