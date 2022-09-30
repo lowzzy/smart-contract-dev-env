@@ -6,11 +6,12 @@
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
+import "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Receiver.sol";
 
 
 pragma solidity ^0.8.0;
 
-contract Collection is  Ownable {
+contract MetaYomenClub is  ERC1155, Ownable, ERC1155Receiver {
     string baseMetadataURIPrefix;
     string baseMetadataURISuffix;
     using Strings for uint256;
@@ -37,27 +38,43 @@ contract Collection is  Ownable {
         1,1,1,3,3,3,6,6,12,12
     ];
 
-function swap(uint256[] memory _fromIds, uint256[] memory _amounts, uint256 _toId) public {
-    uint256 len = _fromIds.length;
-    uint256 i = 0;
-    uint256 fromValue = 0;
-    uint256 tokenId;
-    while(i < len){
-        tokenId = _fromIds[i];
-        fromValue += tokenValues[tokenId];
-        i++;
+    function swap(uint256[] memory _fromIds, uint256[] memory _amounts, uint256 _toId) public {
+        require(canSwap(_fromIds, _amounts, _toId, msg.sender), "Not enough token values to complete transaction");
+        Emaki.safeBatchTransferFrom(msg.sender, address(this), _fromIds, _amounts,"");
+        Emaki.safeTransferFrom(address(this), msg.sender, _toId, 1,"");
     }
-    uint256 toValue = tokenValues[_toId];
-    require(toValue < fromValue,"swap value is under rates");
-    Emaki.safeTransferFrom(msg.sender, owner(),_fromIds,_amounts,"");
-    Emaki.safeTransferFrom(owner(), msg.sender,_toId,1,"");
-}
 
-function changeValues() public {
-}
+    function canSwap(uint256[] memory _fromIds, uint256[] memory _amounts, uint256 _toId, address _userAddress) public returns (bool){
+        return valueCheck(_fromIds, _amounts, _toId) && allowanceCheck(_fromIds, _amounts, _userAddress);
+    }
 
-function addValues() public {
-}
+    function valueCheck(uint256[] memory _fromIds, uint256[] memory _amounts,uint256 _toId) public returns (bool){
+        uint256 len = _fromIds.length;
+        uint256 i = 0;
+        uint256 fromValue = 0;
+        uint256 tokenId;
+        while(i < len){
+            tokenId = _fromIds[i];
+            fromValue += tokenValues[tokenId];
+            i++;
+        }
+        uint256 toValue = tokenValues[_toId];
+        if (toValue < fromValue){
+            return true;
+        }
+        return false;
+    }
+    function allowanceCheck(uint256[] memory _fromIds, uint256[] memory _amounts, address _userAddress) public returns (bool){
+        uint256 len = _fromIds.length;
+        bool isApproved = Emaki.isApprovedForAll(msg.sender, address(this));
+        return isApproved;
+    }
 
+    function changeValues(uint256 _pid, uint256 _newValue) public {
+        tokenValues[_pid] = _newValue;
+    }
 
+    function addValues(uint256 _newValue) public {
+        tokenValues.push(_newValue);
+    }
 }

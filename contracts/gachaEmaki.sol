@@ -55,16 +55,33 @@ contract Collection is ERC1155, Ownable {
         );
     }
 
+    // uint256[] rankTokenB = [HANNYA,TENGU,YOKO];
+    // uint256[] rankTokenA = [KAMAITACHI,WANYUDO,GYUKI];
+    // uint256[] rankTokenS = [YAMATANOROCHI,KYUBI];
+    // uint256[] rankTokenSS = [FUZIN,RAIZIN];
     uint256[] rankTokenB = [HANNYA,TENGU,YOKO];
-    uint256[] rankTokenA = [KAMAITACHI,WANYUDO,GYUKI];
-    uint256[] rankTokenS = [YAMATANOROCHI,KYUBI];
-    uint256[] rankTokenSS = [FUZIN,RAIZIN];
+    uint256[] rankTokenA = [KAMAITACHI,WANYUDO];
+    uint256[] rankTokenS = [KYUBI];
+    uint256[] rankTokenSS = [RAIZIN];
 
     uint256[][] public rankedTokens = [
         rankTokenB,rankTokenA,rankTokenS,rankTokenSS
     ];
         string public name;
         string public symbol;
+
+    function addToken(
+        uint256 _pid,
+        uint256 _id
+    ) public onlyOwner {
+        rankedTokens[_pid].push(_id);
+    }
+
+    function addTokens(
+        uint256[] memory _tokens
+    ) public onlyOwner {
+        rankedTokens.push(_tokens);
+    }
 
     constructor() ERC1155("") {
 
@@ -73,7 +90,7 @@ contract Collection is ERC1155, Ownable {
         baseMetadataURIPrefix = "https://metayomenclub.herokuapp.com/api/v1/metadata/";
         baseMetadataURISuffix = "/emaki";
         probabilities = [
-            50,30,15,5
+            0,50,80,95,100
         ];
     }
 
@@ -113,24 +130,17 @@ contract Collection is ERC1155, Ownable {
 
     function getId(uint256 _num) public returns (uint256){
         uint256 id = _num % 100;
-        uint256 probability_b = probabilities[0];
-        uint256 probability_a = probabilities[0] + probabilities[1];
-        uint256 probability_s = probabilities[0] + probabilities[1]+ probabilities[2];
-        uint256 probability_ss = probabilities[0] + probabilities[1] + probabilities[2] + probabilities[3];
+        uint256 len = rankedTokens.length;
+        uint256 i = 0;
 
-
-        if(0 <= id && id < probability_b){
-            uint256 rankB = 0;
-            return getRandomFromRank(rankB);
-        }else if(probability_b <= id && id < probability_a){
-            uint256 rankA = 1;
-            return getRandomFromRank(rankA);
-        }else if(probability_a <= id && id < probability_s){
-            uint256 rankS = 2;
-            return getRandomFromRank(rankS);
-        }else if(probability_s <= id && id < probability_ss){
-            uint256 rankSS = 3;
-            return getRandomFromRank(rankSS);
+        while(i < len){
+            uint256 probability_top = probabilities[i + 1];
+            uint256 probability_bottom = probabilities[i];
+            if(probability_bottom <= id && id < probability_top){
+                uint256 rank = i;
+                return getRandomFromRank(rank);
+            }
+            i += 1;
         }
         return 0;
     }
@@ -164,6 +174,10 @@ contract Collection is ERC1155, Ownable {
 
     function changeProbabilities(uint256 _pid,uint256 probability) public onlyOwner() {
         probabilities[_pid] = probability;
+    }
+
+    function addProbabilities(uint256 probability) public onlyOwner() {
+        probabilities.push(probability);
     }
 
     function changeCost(
