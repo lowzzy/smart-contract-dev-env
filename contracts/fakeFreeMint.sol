@@ -4,13 +4,12 @@
 // SPDX-License-Identifier: MIT LICENSE
 
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
-import "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Receiver.sol";
-
 
 pragma solidity ^0.8.0;
 
-contract YomenGirlFreeMint is  Ownable, ERC1155Receiver {
+contract YomenGirlFreeMint is  Ownable, ERC1155Holder{
     ERC1155 Girl = ERC1155(0x5cEa23FbEEA919DeF8bB6c7410B7947a22a092FC);
     // ERC1155 Girl = ERC1155(/**ここにコントラクトアドレス入れる*/);
     mapping(address => uint256) public addressMintedBalance;
@@ -39,5 +38,4 @@ contract YomenGirlFreeMint is  Ownable, ERC1155Receiver {
     function pause(bool _state) public onlyOwner() {
             paused = _state;
         }
-
 }
